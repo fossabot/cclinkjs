@@ -9,8 +9,7 @@ interface CCLinkJSOptions {
 }
 
 /**
- * CCLinkJS - Remake from cclink.js
- * @author hhui64<907322015@qq.com>
+ * cclink.js 主类
  */
 class CCLinkJS {
   WebSocket: {
@@ -62,16 +61,13 @@ class CCLinkJS {
   private _onConnect(connection: WebSocket.connection): void {
     this.WebSocket.socketConnection = connection
     this._startHeartBeat()
-    console.info('连接成功')
   }
 
   /**
    * 连接错误处理方法
    * @param {Error} error
    */
-  private _onError(error: Error): void {
-    console.info('连接错误: ' + error.toString())
-  }
+  private _onError(error: Error): void {}
 
   /**
    * 连接关闭处理方法
@@ -81,7 +77,6 @@ class CCLinkJS {
   private _onClose(code: number, desc: string): void {
     this.WebSocket.socketConnection = null
     this._stopHeartBeat()
-    console.info('连接关闭: ' + code + ' ' + desc)
   }
 
   /**
@@ -92,7 +87,6 @@ class CCLinkJS {
     if (data.binaryData?.byteLength) {
       let Uint8ArrayData = new Uint8Array(data.binaryData),
         unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
-      console.info('[接收]', unpackData)
     }
   }
 
@@ -105,7 +99,6 @@ class CCLinkJS {
     let Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
       BufferData: Buffer = Buffer.from(Uint8ArrayData.buffer)
     this.WebSocket.socketConnection && this.WebSocket.socketConnection.sendBytes(BufferData)
-    console.info('[发送]', BufferData.length)
   }
 
   /**
