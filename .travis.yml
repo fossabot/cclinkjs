@@ -4,6 +4,7 @@ node_js:
 cache:
   npm: false
 script:
+  - node -v
   - npm install
   - npm run test
   - npm run build

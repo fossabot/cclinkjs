@@ -117,3 +117,5 @@ typings/
 # project config
 dist/
 package-lock.json
+test.js
+.backup

@@ -6,7 +6,7 @@ module.exports = {
   mode: 'development',
   target: 'node',
   output: {
-    filename: `cclink-${packagejson.version}.bundle.js`,
+    filename: `index.js`,
     path: path.resolve(__dirname, 'dist'),
   },
   node: {
