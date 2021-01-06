@@ -9,12 +9,12 @@ interface CCJsonData {
 
 /**
  * cclink.js 数据处理类
- * @author hhui64<907322015@qq.com>
  */
 class CCLinkDataProcessing {
   ccsid: number
   cccid: number
   msgWithOutSidCid: CCJsonData
+
   constructor(data: CCJsonData) {
     this.ccsid = data.ccsid || 0
     this.cccid = data.cccid || 0
@@ -27,6 +27,7 @@ class CCLinkDataProcessing {
    * 格式化JSON数据
    * cclink.js:2074 format(t)
    * @param {string} type 格式化类型
+   * @returns {CCJsonData}
    */
   public format(type: string): CCJsonData {
     if (type === 'json') {
@@ -59,10 +60,11 @@ class CCLinkDataProcessing {
   /**
    * 编码数据
    * cclink.js:2082 dumps()
+   * @returns {Uint8Array}
    */
   public dumps(): Uint8Array {
     let msgpackEncodeBufferList = msgpack().encode(this.msgWithOutSidCid),
-      msgpackEncodeUint8Array = new Uint8Array(msgpackEncodeBufferList),
+      msgpackEncodeUint8Array = new Uint8Array(), // msgpackEncodeBufferList
       dumpsUint8Array = new Uint8Array(8 + msgpackEncodeUint8Array.byteLength),
       dumpsDataView = new DataView(dumpsUint8Array.buffer)
 
@@ -80,6 +82,7 @@ class CCLinkDataProcessing {
    * 解码数据
    * cclink.js:2094 unpack(e)
    * @param {Uint8Array} Uint8ArrayData 原始数据 Uint8Array
+   * @returns {CCLinkDataProcessing} CCLinkDataProcessing
    */
   public static unpack(Uint8ArrayData: Uint8Array): CCLinkDataProcessing {
     let n: DataView = new DataView(Uint8ArrayData.buffer),
@@ -94,6 +97,7 @@ class CCLinkDataProcessing {
       o = new Uint8Array(Uint8ArrayData.buffer, 8)
     }
 
+    // 这地方可能有点类型转换问题
     let f: object = msgpack().decode(Buffer.from(o))
 
     return new CCLinkDataProcessing(
@@ -112,6 +116,7 @@ class CCLinkDataProcessing {
    * 过滤JSON数据
    * cclink.js:2113 replaceLinkBreak(t)
    * @param {Object} t 原始数据对象
+   * @returns {object|string} 格式化后的数据
    */
   public static replaceLinkBreak(t: object | string): object | string {
     return (
