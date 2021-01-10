@@ -1,4 +1,4 @@
-import msgpack from 'msgpack5'
+import { encode, decode } from '@msgpack/msgpack'
 import pako from 'pako'
 
 interface CCJsonData {
@@ -11,9 +11,9 @@ interface CCJsonData {
  * cclink.js 数据处理类
  */
 class CCLinkDataProcessing {
-  ccsid: number
-  cccid: number
-  msgWithOutSidCid: CCJsonData
+  private ccsid: number
+  private cccid: number
+  private msgWithOutSidCid: CCJsonData
 
   constructor(data: CCJsonData) {
     this.ccsid = data.ccsid || 0
@@ -63,8 +63,7 @@ class CCLinkDataProcessing {
    * @returns {Uint8Array}
    */
   public dumps(): Uint8Array {
-    let msgpackEncodeBufferList = msgpack().encode(this.msgWithOutSidCid),
-      msgpackEncodeUint8Array = new Uint8Array(), // msgpackEncodeBufferList
+    let msgpackEncodeUint8Array = encode(this.msgWithOutSidCid),
       dumpsUint8Array = new Uint8Array(8 + msgpackEncodeUint8Array.byteLength),
       dumpsDataView = new DataView(dumpsUint8Array.buffer)
 
@@ -97,8 +96,7 @@ class CCLinkDataProcessing {
       o = new Uint8Array(Uint8ArrayData.buffer, 8)
     }
 
-    // 这地方可能有点类型转换问题
-    let f: object = msgpack().decode(Buffer.from(o))
+    let f = <object>decode(Buffer.from(o))
 
     return new CCLinkDataProcessing(
       Object.assign(
