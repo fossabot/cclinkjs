@@ -18,9 +18,9 @@
   "license": "MIT",
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
+    "@msgpack/msgpack": "^2.3.0",
     "axios": "^0.21.1",
     "crypto-js": "^4.0.0",
-    "msgpack5": "^5.0.0",
     "pako": "^2.0.2",
     "websocket": "^1.0.33"
   },
