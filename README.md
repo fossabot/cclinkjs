@@ -21,14 +21,23 @@ import { CCLinkJS } from 'cclinkjs'
 const cclinkjs = new CCLinkJS()
 
 // 连接服务器
-cclinkjs.connect()
-console.log(cclinkjs.isReady) // true
+cclinkjs
+  .connect()
+  .on('connect', (connection) => {
+    console.log('连接成功')
+  })
+  .on('close', (code, desc) => {
+    console.log('连接关闭:', code, desc)
+  })
+  .on('error', (error) => {
+    console.log('连接错误:', error)
+  })
 ```
 
-向服务端发送数据
+向服务器发送数据
 
 ```javascript
-// 发送数据
+// 发送 JSON 数据
 cclinkjs.send({ ccsid: 6144, cccid: 5 })
 ```
 
@@ -41,13 +50,13 @@ cclinkjs.send({ ccsid: 6144, cccid: 5 })
  */
 cclinkjs
   .use((data, next) => {
-    if (data.cccid === 32785 && data.ccsid === 515) {
+    if (data.ccsid === 515 && data.cccid === 32785) {
       console.log(data)
     }
     await next()
   })
   .use((data, next) => {
-    if (data.cccid === 32784 && data.ccsid === 512) {
+    if (data.ccsid === 512 && data.cccid === 32784) {
       // do something :)
     }
   })
