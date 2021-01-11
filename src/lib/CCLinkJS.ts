@@ -8,11 +8,6 @@ interface CCLinkJSOptions {
   heartbeatInterval?: number
 }
 
-type onConnectCallbackFunction = (connection: WebSocket.connection) => void
-type onErrorCallbackFunction = (error: Error) => void
-type onCloseCallbackFunction = (code: number, desc: string) => void
-type onMessageCallbackFunction = (data: WebSocket.IMessage) => void
-
 /**
  * cclink.js 主类
  */
@@ -24,13 +19,13 @@ class CCLinkJS {
   }
   public cfg: { url: string; useWss: boolean }
   private _event: {
-    connect?: onConnectCallbackFunction
-    error?: onErrorCallbackFunction
-    close?: onCloseCallbackFunction
-    message?: onMessageCallbackFunction
+    connect?: (connection?: WebSocket.connection) => void
+    error?: (error?: Error) => void
+    close?: (code?: number, desc?: string) => void
+    message?: (data?: WebSocket.IMessage) => void
   }
   private _heartbeatInterval: NodeJS.Timeout | null = null
-  private middleware: Function[]
+  private middleware: Array<(data: CCJsonData, next: () => Promise<unknown>) => void>
   constructor(options?: CCLinkJSOptions) {
     this.cfg = {
       url: '//weblink.cc.163.com/',
@@ -82,23 +77,23 @@ class CCLinkJS {
    * @param event 事件名称
    * @param callback 回调方法
    */
-  public on(event: 'connect', callback?: (connection: WebSocket.connection) => void): this
-  public on(event: 'error', callback?: (error: Error) => void): this
-  public on(event: 'close', callback?: (code: number, desc: string) => void): this
-  public on(event: 'message', callback?: (data: WebSocket.IMessage) => void): this
-  public on(event: string, callback?: Function): this {
+  public on(event: 'connect', callback?: (connection?: WebSocket.connection) => void): this
+  public on(event: 'error', callback?: (error?: Error) => void): this
+  public on(event: 'close', callback?: (code?: number, desc?: string) => void): this
+  public on(event: 'message', callback?: (data?: WebSocket.IMessage) => void): this
+  public on(event: string, callback?: () => void): this {
     switch (event) {
       case 'connect':
-        this._event.connect = <onConnectCallbackFunction>callback
+        this._event.connect = callback
         break
       case 'error':
-        this._event.error = <onErrorCallbackFunction>callback
+        this._event.error = callback
         break
       case 'close':
-        this._event.close = <onCloseCallbackFunction>callback
+        this._event.close = callback
         break
       case 'message':
-        this._event.message = <onMessageCallbackFunction>callback
+        this._event.message = callback
         break
     }
     return this
@@ -139,7 +134,7 @@ class CCLinkJS {
    */
   private _onMessage(data: WebSocket.IMessage): void {
     if (data.binaryData?.byteLength) {
-      let Uint8ArrayData = new Uint8Array(data.binaryData),
+      const Uint8ArrayData = new Uint8Array(data.binaryData),
         unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
 
       this._event.message && this._event.message(data)
@@ -154,10 +149,12 @@ class CCLinkJS {
    * cclink.js:0 send(t)
    * @param {CCJsonData} data JSON数据
    */
-  public send(data: CCJsonData): void {
-    let Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
+  public send(data: CCJsonData): this {
+    const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
       BufferData: Buffer = Buffer.from(Uint8ArrayData)
     this.WebSocket.socketConnection && this.WebSocket.socketConnection.sendBytes(BufferData)
+    
+    return this
   }
 
   /**
@@ -185,9 +182,9 @@ class CCLinkJS {
 
   /**
    * 使用中间件
-   * @param {Function} fn callback function
+   * @param fn callback function
    */
-  public use(fn: (data: CCJsonData, next: Function) => void): this {
+  public use(fn: (data: CCJsonData, next: () => Promise<unknown>) => void): this {
     if (typeof fn !== 'function') {
       throw new TypeError('middleware must be a function!')
     } else {
@@ -197,16 +194,16 @@ class CCLinkJS {
     return this
   }
 
-  private compose(middleware: Function[]) {
+  private compose(middleware: Array<(data: CCJsonData, next: () => Promise<unknown>) => void>) {
     if (!Array.isArray(middleware)) throw new TypeError('Middleware stack must be an array!')
     for (const fn of middleware) {
       if (typeof fn !== 'function') throw new TypeError('Middleware must be composed of functions!')
     }
 
-    return function (data: CCJsonData, next?: Function) {
+    return function (data: CCJsonData, next?: () => Promise<unknown>) {
       let index = -1
       return dispatch(0)
-      function dispatch(i: number) {
+      function dispatch(i: number): Promise<unknown> {
         if (i <= index) return Promise.reject(new Error('next() called multiple times'))
         index = i
         let fn = middleware[i]

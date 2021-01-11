@@ -7,25 +7,45 @@ interface CCJsonData {
   cid?: number
   readonly reason?: string
   readonly result?: number
-  msg?: ChatMsgData[]
-  [propName: string]: any
+  [propName: string]: unknown
 }
 
 interface CCJsonDataWithOutSidCid {
   ccsid?: number
   cccid?: number
-  [propName: string]: any
+  [propName: string]: unknown
 }
 
-interface ChatMsgData {
-  '1'?: string
-  '4': string
-  '5'?: string
-  '7'?: object
-  '9'?: string
-  '99': string
-  '197': string
-  [propName: string]: any
+interface ChatMsgData extends CCJsonData {
+  msg: Array<{
+    '1'?: string
+    '4': string
+    '5'?: string
+    '7'?: unknown
+    '9'?: string
+    '99': string
+    '197': string
+    [propName: string]: unknown
+  }>
+}
+
+interface JoinRoomMsgData extends CCJsonData {
+  data: {
+    msg_list: Array<{ name: string; [propName: string]: unknown }>
+    [propName: string]: unknown
+  }
+}
+
+interface GiftMsgData extends CCJsonData {
+  data: {
+    ccid: number
+    combo: number
+    fromid: number
+    fromnick: string
+    num: number
+    saleid: number
+    [propName: string]: unknown
+  }
 }
 
 /**
@@ -50,10 +70,10 @@ class CCLinkDataProcessing {
    * @param {string} type 格式化类型
    * @returns {CCJsonData}
    */
-  public format(type: 'json'): CCJsonData
-  public format(type: 'string'): string
-  public format(type: string): CCJsonData | string {
-    let _temp = {
+  public format(type?: 'json'): CCJsonData
+  public format(type?: 'string'): string
+  public format(type?: string): CCJsonData | string | this {
+    const _temp = {
       ccsid: this.ccsid,
       cccid: this.cccid,
     }
@@ -75,7 +95,7 @@ class CCLinkDataProcessing {
    * @returns {Uint8Array}
    */
   public dumps(): Uint8Array {
-    let msgpackEncodeUint8Array = encode(this.msgWithOutSidCid),
+    const msgpackEncodeUint8Array = encode(this.msgWithOutSidCid),
       dumpsUint8Array = new Uint8Array(8 + msgpackEncodeUint8Array.byteLength),
       dumpsDataView = new DataView(dumpsUint8Array.buffer)
 
@@ -96,19 +116,21 @@ class CCLinkDataProcessing {
    * @returns {CCLinkDataProcessing} CCLinkDataProcessing
    */
   public static unpack(Uint8ArrayData: Uint8Array): CCLinkDataProcessing {
-    let n: DataView = new DataView(Uint8ArrayData.buffer),
-      ccsid: number = n.getUint16(0, true),
-      cccid: number = n.getUint16(2, true),
-      o: Uint8Array = new Uint8Array()
+    const n: DataView = new DataView(Uint8ArrayData.buffer),
+      ccsid = n.getUint16(0, true),
+      cccid = n.getUint16(2, true)
+
+    let o = new Uint8Array()
+
     if (n.getUint32(4, true)) {
-      let s = n.getUint32(8, true),
+      const s = n.getUint32(8, true),
         u = new Uint8Array(Uint8ArrayData.buffer, 12)
       u.byteLength === s && (o = pako.inflate(u))
     } else {
       o = new Uint8Array(Uint8ArrayData.buffer, 8)
     }
 
-    let f = <object>decode(Buffer.from(o))
+    const f = <CCJsonData>decode(Buffer.from(o))
 
     return new CCLinkDataProcessing(
       Object.assign(
@@ -125,12 +147,12 @@ class CCLinkDataProcessing {
   /**
    * 过滤JSON数据
    * cclink.js:2113 replaceLinkBreak(t)
-   * @param {Object} t 原始数据对象
-   * @returns {object|string} 格式化后的数据
+   * @param t 原始数据对象
+   * @returns 格式化后的数据
    */
-  public static replaceLinkBreak(t: object): string
-  public static replaceLinkBreak(t: string): object
-  public static replaceLinkBreak(t: object | string): string | object {
+  public static replaceLinkBreak(t: string): CCJsonData
+  public static replaceLinkBreak(t: CCJsonData): CCJsonData
+  public static replaceLinkBreak(t: CCJsonData | string): CCJsonData {
     return (
       'object' === (void 0 === t ? 'undefined' : typeof t) && (t = JSON.stringify(t)),
       (t = ('' + t).replace(/\\r\\n/g, '')),
@@ -139,4 +161,4 @@ class CCLinkDataProcessing {
   }
 }
 
-export { CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid, ChatMsgData }
+export { CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid, ChatMsgData, JoinRoomMsgData, GiftMsgData }
