@@ -8,7 +8,7 @@ CC 直播前端模块 cclink.js 反混淆项目，该模块主要负责与服务
 npm install cclinkjs --save
 ```
 
-## 使用
+## 快速开始
 
 引入并创建一个 CCLinkJS 对象
 
@@ -30,14 +30,27 @@ console.log(cclinkjs.isReady) // true
 ```javascript
 // 发送数据
 cclinkjs.send({ ccsid: 6144, cccid: 5 })
+```
 
+使用中间件处理数据
+
+```javascript
 /**
- * 如担心发送数据时恰巧碰到 connection 失效或尚在连接中
- * 可以通过 options 设置 { cache: true } 来将消息暂时
- * 放入缓存队列中，待 socket 连接成功时会自动将缓存队列
- * 中尚未发送的消息重新发送。
+ * use() 方法接收一个回调方法，该回调方法有 data, next 两个参数
+ * 可在中间件里处理服务器发来的数据，用法参考 koa 框架的中间件功能
  */
-cclinkjs.send({ ccsid: 6144, cccid: 5 }, { cache: true })
+cclinkjs
+  .use((data, next) => {
+    if (data.cccid === 32785 && data.ccsid === 515) {
+      console.log(data)
+    }
+    await next()
+  })
+  .use((data, next) => {
+    if (data.cccid === 32784 && data.ccsid === 512) {
+      // do something :)
+    }
+  })
 ```
 
 ## 声明
