@@ -2,8 +2,29 @@ import { encode, decode } from '@msgpack/msgpack'
 import pako from 'pako'
 
 interface CCJsonData {
+  ccsid: number
+  cccid: number
+  cid?: number
+  readonly reason?: string
+  readonly result?: number
+  msg?: ChatMsgData[]
+  [propName: string]: any
+}
+
+interface CCJsonDataWithOutSidCid {
   ccsid?: number
   cccid?: number
+  [propName: string]: any
+}
+
+interface ChatMsgData {
+  '1'?: string
+  '4': string
+  '5'?: string
+  '7'?: object
+  '9'?: string
+  '99': string
+  '197': string
   [propName: string]: any
 }
 
@@ -11,9 +32,9 @@ interface CCJsonData {
  * cclink.js 数据处理类
  */
 class CCLinkDataProcessing {
-  private ccsid: number
-  private cccid: number
-  private msgWithOutSidCid: CCJsonData
+  public ccsid: number
+  public cccid: number
+  public msgWithOutSidCid: CCJsonDataWithOutSidCid
 
   constructor(data: CCJsonData) {
     this.ccsid = data.ccsid || 0
@@ -29,32 +50,23 @@ class CCLinkDataProcessing {
    * @param {string} type 格式化类型
    * @returns {CCJsonData}
    */
-  public format(type: string): CCJsonData {
-    if (type === 'json') {
-      return Object.assign(
-        {},
-        {
-          ccsid: this.ccsid,
-          cccid: this.cccid,
-        },
-        this.msgWithOutSidCid
-      )
+  public format(type: 'json'): CCJsonData
+  public format(type: 'string'): string
+  public format(type: string): CCJsonData | string {
+    let _temp = {
+      ccsid: this.ccsid,
+      cccid: this.cccid,
     }
 
-    // return 'json' == t
-    //   ? Object.assign(
-    //       {},
-    //       {
-    //         ccsid: this.ccsid,
-    //         cccid: this.cccid,
-    //       },
-    //       this.msgWithOutSidCid
-    //     )
-    // : 'string' == t
-    // ? JSON.stringify(this)
-    // : this
+    if (type === 'json') {
+      return Object.assign({}, _temp, this.msgWithOutSidCid)
+    }
 
-    return {}
+    if (type === 'string') {
+      return JSON.stringify(this)
+    }
+
+    return this
   }
 
   /**
@@ -116,7 +128,9 @@ class CCLinkDataProcessing {
    * @param {Object} t 原始数据对象
    * @returns {object|string} 格式化后的数据
    */
-  public static replaceLinkBreak(t: object | string): object | string {
+  public static replaceLinkBreak(t: object): string
+  public static replaceLinkBreak(t: string): object
+  public static replaceLinkBreak(t: object | string): string | object {
     return (
       'object' === (void 0 === t ? 'undefined' : typeof t) && (t = JSON.stringify(t)),
       (t = ('' + t).replace(/\\r\\n/g, '')),
@@ -125,4 +139,4 @@ class CCLinkDataProcessing {
   }
 }
 
-export { CCJsonData, CCLinkDataProcessing }
+export { CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid, ChatMsgData }
