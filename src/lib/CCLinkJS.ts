@@ -3,7 +3,7 @@ import { CCLinkDataProcessing, CCJsonData, CCRecvJsonData } from './CCLinkDataPr
 
 interface CCLinkJSOptions {
   url?: string
-  usWss?: boolean
+  useWss?: boolean
   reconnectTimes?: number
   heartbeatInterval?: number
 }
