@@ -4,9 +4,14 @@ import pako from 'pako'
 interface CCJsonData {
   ccsid: number
   cccid: number
-  cid?: number
+  [propName: string]: unknown
+}
+
+interface CCRecvJsonData extends CCJsonData {
   readonly reason?: string
   readonly result?: number
+  readonly _cid?: number
+  readonly _sid?: number
   [propName: string]: unknown
 }
 
@@ -36,11 +41,11 @@ class CCLinkDataProcessing {
    * 格式化JSON数据
    * cclink.js:2074 format(t)
    * @param {string} type 格式化类型
-   * @returns {CCJsonData}
+   * @returns 格式化后的数据
    */
-  public format(type?: 'json'): CCJsonData
+  public format(type?: 'json'): CCRecvJsonData
   public format(type?: 'string'): string
-  public format(type?: string): CCJsonData | string | this {
+  public format(type?: string): CCRecvJsonData | string | this {
     const _temp = {
       ccsid: this.ccsid,
       cccid: this.cccid,
@@ -98,7 +103,7 @@ class CCLinkDataProcessing {
       o = new Uint8Array(Uint8ArrayData.buffer, 8)
     }
 
-    const f = <CCJsonData>decode(Buffer.from(o))
+    const f = <CCRecvJsonData>decode(Buffer.from(o))
 
     return new CCLinkDataProcessing(
       Object.assign(
@@ -118,9 +123,9 @@ class CCLinkDataProcessing {
    * @param t 原始数据对象
    * @returns 格式化后的数据
    */
-  public static replaceLinkBreak(t: string): CCJsonData
-  public static replaceLinkBreak(t: CCJsonData): CCJsonData
-  public static replaceLinkBreak(t: CCJsonData | string): CCJsonData {
+  public static replaceLinkBreak(t: string): CCRecvJsonData
+  public static replaceLinkBreak(t: CCRecvJsonData): CCRecvJsonData
+  public static replaceLinkBreak(t: CCRecvJsonData | string): CCRecvJsonData {
     return (
       'object' === (void 0 === t ? 'undefined' : typeof t) && (t = JSON.stringify(t)),
       (t = ('' + t).replace(/\\r\\n/g, '')),
@@ -129,4 +134,4 @@ class CCLinkDataProcessing {
   }
 }
 
-export { CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid }
+export { CCLinkDataProcessing, CCJsonData, CCRecvJsonData, CCJsonDataWithOutSidCid }
