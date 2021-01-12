@@ -16,38 +16,6 @@ interface CCJsonDataWithOutSidCid {
   [propName: string]: unknown
 }
 
-interface ChatMsgData extends CCJsonData {
-  msg: Array<{
-    '1'?: string
-    '4': string
-    '5'?: string
-    '7'?: unknown
-    '9'?: string
-    '99': string
-    '197': string
-    [propName: string]: unknown
-  }>
-}
-
-interface JoinRoomMsgData extends CCJsonData {
-  data: {
-    msg_list: Array<{ name: string; [propName: string]: unknown }>
-    [propName: string]: unknown
-  }
-}
-
-interface GiftMsgData extends CCJsonData {
-  data: {
-    ccid: number
-    combo: number
-    fromid: number
-    fromnick: string
-    num: number
-    saleid: number
-    [propName: string]: unknown
-  }
-}
-
 /**
  * cclink.js 数据处理类
  */
@@ -161,4 +129,4 @@ class CCLinkDataProcessing {
   }
 }
 
-export { CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid, ChatMsgData, JoinRoomMsgData, GiftMsgData }
+export { CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid }
