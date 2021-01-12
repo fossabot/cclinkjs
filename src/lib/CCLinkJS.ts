@@ -4,7 +4,11 @@ import { CCLinkDataProcessing, CCJsonData, CCRecvJsonData } from './CCLinkDataPr
 interface CCLinkJSOptions {
   url?: string
   useWss?: boolean
-  reconnectTimes?: number
+  reconnect?: {
+    autoReconnect?: boolean
+    reconnectCount?: number
+    reconnectTimes?: number
+  }
   heartbeatInterval?: number
 }
 
@@ -17,19 +21,33 @@ class CCLinkJS {
     server: WebSocket.server
     socketConnection: WebSocket.connection | null
   }
-  public cfg: { url: string; useWss: boolean }
+  private cfg: {
+    url: string
+    useWss: boolean
+    reconnect: { autoReconnect: boolean; reconnectCount: number; reconnectTimes: number }
+    heartbeatInterval: number
+  }
   private _event: {
     connect?: (connection?: WebSocket.connection) => void
     error?: (error?: Error) => void
     close?: (code?: number, desc?: string) => void
     message?: (data?: WebSocket.IMessage) => void
   }
-  private _heartbeatInterval: NodeJS.Timeout | null = null
+  private _reconnectCount: number
+  private _reconnectInterval: NodeJS.Timeout | null
+  private _heartbeatInterval: NodeJS.Timeout | null
   private middleware: Array<(data: CCRecvJsonData, next: () => Promise<unknown>) => void>
+
   constructor(options?: CCLinkJSOptions) {
     this.cfg = {
-      url: '//weblink.cc.163.com/',
-      useWss: true,
+      url: options?.url || '//weblink.cc.163.com/',
+      useWss: options?.useWss || true,
+      reconnect: {
+        autoReconnect: options?.reconnect?.autoReconnect || true,
+        reconnectCount: options?.reconnect?.reconnectCount || 3,
+        reconnectTimes: options?.reconnect?.reconnectTimes || 5000,
+      },
+      heartbeatInterval: options?.heartbeatInterval || 30000,
     }
 
     this.WebSocket = {
@@ -44,6 +62,10 @@ class CCLinkJS {
       close: undefined,
       message: undefined,
     }
+
+    this._reconnectCount = 0
+    this._reconnectInterval = null
+    this._heartbeatInterval = null
 
     this.middleware = []
   }
@@ -107,6 +129,11 @@ class CCLinkJS {
     this.WebSocket.socketConnection = connection
     this._event.connect && this._event.connect(connection)
     this._startHeartBeat()
+
+    if (this.cfg.reconnect.autoReconnect && this._reconnectInterval) {
+      this._reconnectCount = 0
+      clearInterval(this._reconnectInterval)
+    }
   }
 
   /**
@@ -115,6 +142,19 @@ class CCLinkJS {
    */
   private _onError(error: Error): void {
     this._event.error && this._event.error(error)
+    this._stopHeartBeat()
+
+    if (this.cfg.reconnect.autoReconnect && !this._reconnectInterval) {
+      this._reconnectInterval = setInterval(() => {
+        if (this._reconnectCount < this.cfg.reconnect.reconnectCount) {
+          this.connect()
+          this._reconnectCount++
+        } else {
+          this._reconnectCount = 0
+          this._reconnectInterval && clearInterval(this._reconnectInterval)
+        }
+      }, this.cfg.reconnect.reconnectTimes)
+    }
   }
 
   /**
@@ -170,7 +210,7 @@ class CCLinkJS {
         ccsid: 6144,
         cccid: 5,
       })
-    }, 30000)
+    }, this.cfg.heartbeatInterval)
   }
 
   /**
