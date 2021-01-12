@@ -1,5 +1,5 @@
 import WebSocket from 'websocket'
-import { CCLinkDataProcessing, CCJsonData } from './CCLinkDataProcessing'
+import { CCLinkDataProcessing, CCJsonData, CCRecvJsonData } from './CCLinkDataProcessing'
 
 interface CCLinkJSOptions {
   url?: string
@@ -25,7 +25,7 @@ class CCLinkJS {
     message?: (data?: WebSocket.IMessage) => void
   }
   private _heartbeatInterval: NodeJS.Timeout | null = null
-  private middleware: Array<(data: CCJsonData, next: () => Promise<unknown>) => void>
+  private middleware: Array<(data: CCRecvJsonData, next: () => Promise<unknown>) => void>
   constructor(options?: CCLinkJSOptions) {
     this.cfg = {
       url: '//weblink.cc.163.com/',
@@ -147,13 +147,13 @@ class CCLinkJS {
   /**
    * 发送JSON数据
    * cclink.js:0 send(t)
-   * @param {CCJsonData} data JSON数据
+   * @param data JSON数据
    */
   public send(data: CCJsonData): this {
     const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
       BufferData: Buffer = Buffer.from(Uint8ArrayData)
     this.WebSocket.socketConnection && this.WebSocket.socketConnection.sendBytes(BufferData)
-    
+
     return this
   }
 
@@ -184,7 +184,7 @@ class CCLinkJS {
    * 使用中间件
    * @param fn callback function
    */
-  public use(fn: (data: CCJsonData, next: () => Promise<unknown>) => void): this {
+  public use(fn: (data: CCRecvJsonData, next: () => Promise<unknown>) => void): this {
     if (typeof fn !== 'function') {
       throw new TypeError('middleware must be a function!')
     } else {
@@ -194,13 +194,13 @@ class CCLinkJS {
     return this
   }
 
-  private compose(middleware: Array<(data: CCJsonData, next: () => Promise<unknown>) => void>) {
+  private compose(middleware: Array<(data: CCRecvJsonData, next: () => Promise<unknown>) => void>) {
     if (!Array.isArray(middleware)) throw new TypeError('Middleware stack must be an array!')
     for (const fn of middleware) {
       if (typeof fn !== 'function') throw new TypeError('Middleware must be composed of functions!')
     }
 
-    return function (data: CCJsonData, next?: () => Promise<unknown>) {
+    return function (data: CCRecvJsonData, next?: () => Promise<unknown>) {
       let index = -1
       return dispatch(0)
       function dispatch(i: number): Promise<unknown> {

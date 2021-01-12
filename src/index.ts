@@ -11,6 +11,6 @@
  */
 
 import { CCLinkJS } from './lib/CCLinkJS'
-import { CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid } from './lib/CCLinkDataProcessing'
+import { CCLinkDataProcessing, CCJsonData, CCRecvJsonData, CCJsonDataWithOutSidCid } from './lib/CCLinkDataProcessing'
 
-export { CCLinkJS, CCLinkDataProcessing, CCJsonData, CCJsonDataWithOutSidCid }
+export { CCLinkJS, CCLinkDataProcessing, CCJsonData, CCRecvJsonData, CCJsonDataWithOutSidCid }
