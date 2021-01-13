@@ -1,12 +1,18 @@
 import { encode, decode } from '@msgpack/msgpack'
 import pako from 'pako'
 
+/**
+ * 发送至服务端的 JSON 数据
+ */
 interface CCJsonData {
   ccsid: number
   cccid: number
   [propName: string]: unknown
 }
 
+/**
+ * 从服务端接收到的 JSON 数据
+ */
 interface CCRecvJsonData extends CCJsonData {
   readonly reason?: string
   readonly result?: number
@@ -15,6 +21,9 @@ interface CCRecvJsonData extends CCJsonData {
   [propName: string]: unknown
 }
 
+/**
+ * 去除了 `ccsid` 与 `cccid` 两个属性的 JSON 数据
+ */
 interface CCJsonDataWithOutSidCid {
   ccsid?: number
   cccid?: number
@@ -39,8 +48,10 @@ class CCLinkDataProcessing {
 
   /**
    * 格式化JSON数据
+   * 
    * cclink.js:2074 format(t)
-   * @param {string} type 格式化类型
+   * 
+   * @param type 格式化类型
    * @returns 格式化后的数据
    */
   public format(type?: 'json'): CCRecvJsonData
@@ -64,8 +75,10 @@ class CCLinkDataProcessing {
 
   /**
    * 编码数据
+   *
    * cclink.js:2082 dumps()
-   * @returns {Uint8Array}
+   *
+   * @returns Uint8Array Data
    */
   public dumps(): Uint8Array {
     const msgpackEncodeUint8Array = encode(this.msgWithOutSidCid),
@@ -84,9 +97,11 @@ class CCLinkDataProcessing {
 
   /**
    * 解码数据
+   * 
    * cclink.js:2094 unpack(e)
-   * @param {Uint8Array} Uint8ArrayData 原始数据 Uint8Array
-   * @returns {CCLinkDataProcessing} CCLinkDataProcessing
+   * 
+   * @param Uint8ArrayData 原始数据 Uint8Array
+   * @returns CCLinkDataProcessing
    */
   public static unpack(Uint8ArrayData: Uint8Array): CCLinkDataProcessing {
     const n: DataView = new DataView(Uint8ArrayData.buffer),
@@ -119,7 +134,9 @@ class CCLinkDataProcessing {
 
   /**
    * 过滤JSON数据
+   * 
    * cclink.js:2113 replaceLinkBreak(t)
+   * 
    * @param t 原始数据对象
    * @returns 格式化后的数据
    */
