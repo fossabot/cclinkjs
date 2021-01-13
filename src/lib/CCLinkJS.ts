@@ -96,6 +96,7 @@ class CCLinkJS {
 
   /**
    * 设置事件回调
+   * 
    * @param event 事件名称
    * @param callback 回调方法
    */
@@ -123,7 +124,7 @@ class CCLinkJS {
 
   /**
    * 连接成功处理方法
-   * @param {WebSocket.connection} connection
+   * @param connection websocket connection
    */
   private _onConnect(connection: WebSocket.connection): void {
     this.WebSocket.socketConnection = connection
@@ -138,7 +139,7 @@ class CCLinkJS {
 
   /**
    * 连接错误处理方法
-   * @param {Error} error
+   * @param error
    */
   private _onError(error: Error): void {
     this._event.error && this._event.error(error)
@@ -159,8 +160,8 @@ class CCLinkJS {
 
   /**
    * 连接关闭处理方法
-   * @param {number} code
-   * @param {string} desc
+   * @param code 状态码
+   * @param desc 描述
    */
   private _onClose(code: number, desc: string): void {
     this.WebSocket.socketConnection = null
@@ -170,7 +171,7 @@ class CCLinkJS {
 
   /**
    * 消息处理方法
-   * @param {WebSocket.IMessage} data
+   * @param data recv data
    */
   private _onMessage(data: WebSocket.IMessage): void {
     if (data.binaryData?.byteLength) {
@@ -185,9 +186,10 @@ class CCLinkJS {
   }
 
   /**
-   * 发送JSON数据
-   * cclink.js:0 send(t)
-   * @param data JSON数据
+   * 向服务端发送 JSON 数据，该方法会自动编码需要发送至服务端的 JSON 数据。
+   * 
+   * @param data JSON 数据
+   *     其中必须包含 `ccsid` 和 `cccid` 两个属性，这两个属性指定了该数据属于服务端的哪个接口。
    */
   public send(data: CCJsonData): this {
     const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
@@ -198,7 +200,7 @@ class CCLinkJS {
   }
 
   /**
-   * 开始发送心跳包
+   * 开始自动发送心跳包
    */
   private _startHeartBeat(): void {
     this.send({
@@ -214,15 +216,17 @@ class CCLinkJS {
   }
 
   /**
-   * 停止发送心跳包
+   * 停止自动发送心跳包
    */
   private _stopHeartBeat(): void {
     this._heartbeatInterval && clearInterval(this._heartbeatInterval)
   }
 
   /**
-   * 使用中间件
-   * @param fn callback function
+   * 使用中间件，此方法的`fn`参数接收一个回调方法，在接收到数据时将会回调它。
+   *
+   * @param fn 回调方法 (callback function)
+   *     应传入一个参数为 `data` 和 `next` 的方法，在回调时 `data` 即为接收到并已解码的数据，`next` 为下一个中间件。
    */
   public use(fn: (data: CCRecvJsonData, next: () => Promise<unknown>) => void): this {
     if (typeof fn !== 'function') {
