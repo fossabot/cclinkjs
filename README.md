@@ -49,13 +49,13 @@ cclinkjs.send({ ccsid: 6144, cccid: 5 })
  * 可在中间件里处理服务器发来的数据，用法参考 koa 框架的中间件功能
  */
 cclinkjs
-  .use((data, next) => {
+  .use(async (data, next) => {
     if (data.ccsid === 515 && data.cccid === 32785) {
       console.log(data)
     }
     await next()
   })
-  .use((data, next) => {
+  .use(async (data, next) => {
     if (data.ccsid === 512 && data.cccid === 32784) {
       // do something :)
     }
