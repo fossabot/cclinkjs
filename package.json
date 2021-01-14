@@ -1,5 +1,5 @@
 {
-  "name": "cclinkjs",
+  "name": "@hhui64/cclinkjs",
   "version": "1.0.0",
   "description": "cclink.js remake",
   "main": "dist/index.js",
@@ -18,6 +18,9 @@
     "url": "git@github.com:hhui64/cclinkjs.git"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
     "@msgpack/msgpack": "^2.3.0",
