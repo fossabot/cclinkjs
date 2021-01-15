@@ -15,7 +15,7 @@ deploy:
   email: $NPM_EMAIL
   api_key: $NPM_TOKEN
   on:
-    tags: true
+    # tags: true
     all_branches: true
   condition: '$TRAVIS_TAG =~ ^v[0-9]+.[0-9]+.[0-9]+$'
 branches:
