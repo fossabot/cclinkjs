@@ -4,7 +4,7 @@ import pako from 'pako'
 /**
  * 发送至服务端的 JSON 数据
  */
-interface CCJsonData {
+interface ICCJsonData {
   ccsid: number
   cccid: number
   [propName: string]: unknown
@@ -13,7 +13,7 @@ interface CCJsonData {
 /**
  * 从服务端接收到的 JSON 数据
  */
-interface CCRecvJsonData extends CCJsonData {
+interface ICCRecvJsonData extends ICCJsonData {
   readonly reason?: string
   readonly result?: number
   readonly _cid?: number
@@ -24,7 +24,7 @@ interface CCRecvJsonData extends CCJsonData {
 /**
  * 去除了 `ccsid` 与 `cccid` 两个属性的 JSON 数据
  */
-interface CCJsonDataWithOutSidCid {
+interface ICCJsonDataWithOutSidCid {
   ccsid?: number
   cccid?: number
   [propName: string]: unknown
@@ -36,9 +36,9 @@ interface CCJsonDataWithOutSidCid {
 class CCLinkDataProcessing {
   public ccsid: number
   public cccid: number
-  public msgWithOutSidCid: CCJsonDataWithOutSidCid
+  public msgWithOutSidCid: ICCJsonDataWithOutSidCid
 
-  constructor(data: CCJsonData) {
+  constructor(data: ICCJsonData) {
     this.ccsid = data.ccsid || 0
     this.cccid = data.cccid || 0
     this.msgWithOutSidCid = data
@@ -48,15 +48,15 @@ class CCLinkDataProcessing {
 
   /**
    * 格式化JSON数据
-   * 
+   *
    * cclink.js:2074 format(t)
-   * 
+   *
    * @param type 格式化类型
    * @returns 格式化后的数据
    */
-  public format(type?: 'json'): CCRecvJsonData
+  public format(type?: 'json'): ICCRecvJsonData
   public format(type?: 'string'): string
-  public format(type?: string): CCRecvJsonData | string | this {
+  public format(type?: string): ICCRecvJsonData | string | this {
     const _temp = {
       ccsid: this.ccsid,
       cccid: this.cccid,
@@ -97,9 +97,9 @@ class CCLinkDataProcessing {
 
   /**
    * 解码数据
-   * 
+   *
    * cclink.js:2094 unpack(e)
-   * 
+   *
    * @param Uint8ArrayData 原始数据 Uint8Array
    * @returns CCLinkDataProcessing
    */
@@ -118,7 +118,7 @@ class CCLinkDataProcessing {
       o = new Uint8Array(Uint8ArrayData.buffer, 8)
     }
 
-    const f = <CCRecvJsonData>decode(Buffer.from(o))
+    const f = <ICCRecvJsonData>decode(Buffer.from(o))
 
     return new CCLinkDataProcessing(
       Object.assign(
@@ -134,15 +134,15 @@ class CCLinkDataProcessing {
 
   /**
    * 过滤JSON数据
-   * 
+   *
    * cclink.js:2113 replaceLinkBreak(t)
-   * 
+   *
    * @param t 原始数据对象
    * @returns 格式化后的数据
    */
-  public static replaceLinkBreak(t: string): CCRecvJsonData
-  public static replaceLinkBreak(t: CCRecvJsonData): CCRecvJsonData
-  public static replaceLinkBreak(t: CCRecvJsonData | string): CCRecvJsonData {
+  public static replaceLinkBreak(t: string): ICCRecvJsonData
+  public static replaceLinkBreak(t: ICCRecvJsonData): ICCRecvJsonData
+  public static replaceLinkBreak(t: ICCRecvJsonData | string): ICCRecvJsonData {
     return (
       'object' === (void 0 === t ? 'undefined' : typeof t) && (t = JSON.stringify(t)),
       (t = ('' + t).replace(/\\r\\n/g, '')),
@@ -151,4 +151,4 @@ class CCLinkDataProcessing {
   }
 }
 
-export { CCLinkDataProcessing, CCJsonData, CCRecvJsonData, CCJsonDataWithOutSidCid }
+export { CCLinkDataProcessing, ICCJsonData, ICCRecvJsonData, ICCJsonDataWithOutSidCid }

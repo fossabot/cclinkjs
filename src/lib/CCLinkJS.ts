@@ -1,7 +1,7 @@
 import WebSocket from 'websocket'
-import { CCLinkDataProcessing, CCJsonData, CCRecvJsonData } from './CCLinkDataProcessing'
+import { CCLinkDataProcessing, ICCJsonData, ICCRecvJsonData } from './CCLinkDataProcessing'
 
-interface CCLinkJSOptions {
+interface ICCLinkJSOptions {
   url?: string
   useWss?: boolean
   reconnect?: {
@@ -36,9 +36,9 @@ class CCLinkJS {
   private _reconnectCount: number
   private _reconnectInterval: NodeJS.Timeout | null
   private _heartbeatInterval: NodeJS.Timeout | null
-  private middleware: Array<(data: CCRecvJsonData, next: () => Promise<unknown>) => void>
+  private middleware: Array<(data: ICCRecvJsonData, next: () => Promise<unknown>) => void>
 
-  constructor(options?: CCLinkJSOptions) {
+  constructor(options?: ICCLinkJSOptions) {
     this.cfg = {
       url: options?.url || '//weblink.cc.163.com/',
       useWss: options?.useWss || true,
@@ -96,7 +96,7 @@ class CCLinkJS {
 
   /**
    * 设置事件回调
-   * 
+   *
    * @param event 事件名称
    * @param callback 回调方法
    */
@@ -187,11 +187,11 @@ class CCLinkJS {
 
   /**
    * 向服务端发送 JSON 数据，该方法会自动编码需要发送至服务端的 JSON 数据。
-   * 
+   *
    * @param data JSON 数据
    *     其中必须包含 `ccsid` 和 `cccid` 两个属性，这两个属性指定了该数据属于服务端的哪个接口。
    */
-  public send(data: CCJsonData): this {
+  public send(data: ICCJsonData): this {
     const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
       BufferData: Buffer = Buffer.from(Uint8ArrayData)
     this.WebSocket.socketConnection && this.WebSocket.socketConnection.sendBytes(BufferData)
@@ -228,7 +228,7 @@ class CCLinkJS {
    * @param fn 回调方法 (callback function)
    *     应传入一个参数为 `data` 和 `next` 的方法，在回调时 `data` 即为接收到并已解码的数据，`next` 为下一个中间件。
    */
-  public use(fn: (data: CCRecvJsonData, next: () => Promise<unknown>) => void): this {
+  public use(fn: (data: ICCRecvJsonData, next: () => Promise<unknown>) => void): this {
     if (typeof fn !== 'function') {
       throw new TypeError('middleware must be a function!')
     } else {
@@ -238,13 +238,13 @@ class CCLinkJS {
     return this
   }
 
-  private compose(middleware: Array<(data: CCRecvJsonData, next: () => Promise<unknown>) => void>) {
+  private compose(middleware: Array<(data: ICCRecvJsonData, next: () => Promise<unknown>) => void>) {
     if (!Array.isArray(middleware)) throw new TypeError('Middleware stack must be an array!')
     for (const fn of middleware) {
       if (typeof fn !== 'function') throw new TypeError('Middleware must be composed of functions!')
     }
 
-    return function (data: CCRecvJsonData, next?: () => Promise<unknown>) {
+    return function (data: ICCRecvJsonData, next?: () => Promise<unknown>) {
       let index = -1
       return dispatch(0)
       function dispatch(i: number): Promise<unknown> {
