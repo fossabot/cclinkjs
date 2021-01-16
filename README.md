@@ -1,11 +1,11 @@
 # CCLinkJS Remake [![Build Status](https://www.travis-ci.com/hhui64/cclinkjs.svg?branch=master)](https://www.travis-ci.com/hhui64/cclinkjs) ![GitHub](https://img.shields.io/github/license/hhui64/cclinkjs) ![GitHub](https://img.shields.io/github/languages/top/hhui64/cclinkjs)
 
-CC 直播前端模块 cclink.js 反混淆项目，该模块主要负责与服务端的通信
+CC直播前端通讯模块(cclink.js) Node.js 版，使用 TypeScript 编并写实现了与CC直播服务端的通信协议
 
 ## 安装
 
 ```bash
-npm install cclinkjs --save
+npm install @hhui64/cclinkjs --save
 ```
 
 ## 快速开始
@@ -14,9 +14,9 @@ npm install cclinkjs --save
 
 ```javascript
 // CommonJS
-const CCLinkJS = require('cclinkjs')
+const CCLinkJS = require('@hhui64/cclinkjs').CCLinkJS
 // ES6 Moudule
-import { CCLinkJS } from 'cclinkjs'
+import { CCLinkJS } from '@hhui64/cclinkjs'
 
 const cclinkjs = new CCLinkJS()
 
