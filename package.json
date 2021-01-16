@@ -1,6 +1,6 @@
 {
   "name": "@hhui64/cclinkjs",
-  "version": "1.0.12",
+  "version": "1.0.11",
   "description": "cclink.js remake",
   "main": "dist/index.js",
   "scripts": {
