@@ -1,6 +1,7 @@
 /**
- * CCLinkJS Remake
- * @author hhui64<907322015@qq.com>
+ * CCLinkJS Node
+ * @author hhui64 <907322015@qq.com>
+ * @copyright hhui64 2021
  *
  * 致终于来到这里的勇敢的人：
  *
@@ -11,6 +12,11 @@
  */
 
 import { CCLinkJS } from './lib/CCLinkJS'
-import { CCLinkDataProcessing, ICCJsonData, ICCRecvJsonData, ICCJsonDataWithOutSidCid } from './lib/CCLinkDataProcessing'
+import {
+  CCLinkDataProcessing,
+  ICCJsonData,
+  ICCRecvJsonData,
+  ICCJsonDataWithOutSidCid,
+} from './lib/CCLinkDataProcessing'
 
 export { CCLinkJS, CCLinkDataProcessing, ICCJsonData, ICCRecvJsonData, ICCJsonDataWithOutSidCid }

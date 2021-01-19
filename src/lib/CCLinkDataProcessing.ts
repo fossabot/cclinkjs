@@ -38,6 +38,10 @@ class CCLinkDataProcessing {
   public cccid: number
   public msgWithOutSidCid: ICCJsonDataWithOutSidCid
 
+  /**
+   * 创建一个数据处理类
+   * @param data JSON 数据
+   */
   constructor(data: ICCJsonData) {
     this.ccsid = data.ccsid || 0
     this.cccid = data.cccid || 0
