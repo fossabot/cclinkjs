@@ -1,6 +1,6 @@
-# CCLinkJS Remake [![Build Status](https://www.travis-ci.com/hhui64/cclinkjs.svg?branch=master)](https://www.travis-ci.com/hhui64/cclinkjs) ![GitHub](https://img.shields.io/github/license/hhui64/cclinkjs) ![GitHub](https://img.shields.io/github/languages/top/hhui64/cclinkjs)
+# CCLinkJS Node [![Build Status](https://www.travis-ci.com/hhui64/cclinkjs.svg?branch=master)](https://www.travis-ci.com/hhui64/cclinkjs) ![GitHub](https://img.shields.io/github/license/hhui64/cclinkjs) ![GitHub](https://img.shields.io/github/languages/top/hhui64/cclinkjs)
 
-CC直播前端通讯模块(cclink.js) Node.js 版，使用 TypeScript 编并写实现了与CC直播服务端的通信协议
+网易CC直播前端通讯模块(cclink.js) Node.js 版，使用 TypeScript 编写并实现了与网易CC直播服务端的通信协议
 
 ## 安装
 
