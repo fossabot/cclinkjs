@@ -38,6 +38,10 @@ class CCLinkJS {
   private _heartbeatInterval: NodeJS.Timeout | null
   private middleware: Array<(data: ICCRecvJsonData, next: () => Promise<unknown>) => void>
 
+  /**
+   * 创建一个 cclink.js 对象
+   * @param options 配置项
+   */
   constructor(options?: ICCLinkJSOptions) {
     this.cfg = {
       url: options?.url || '//weblink.cc.163.com/',
