@@ -22,7 +22,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@babel/polyfill": "^7.12.1",
     "@msgpack/msgpack": "^2.3.0",
     "axios": "^0.21.1",
     "crypto-js": "^4.0.0",
