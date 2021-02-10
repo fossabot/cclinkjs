@@ -19,13 +19,11 @@ deploy:
   access: 'public'
   on:
     tags: true
-    all_branches: true
-    # branch: master
-    # condition: '$TRAVIS_TAG =~ ^v[0-9]+.[0-9]+.[0-9]+$'
   edge: true
 branches:
   only:
     - master
+    - /^v.*$/
 after_script:
   - cd dist
   - cd -
