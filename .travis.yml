@@ -10,10 +10,10 @@ script:
   - npm run build
 before_deploy:
   - export TRAVIS_TAG=$GIT_TAG
+  - echo "$TRAVIS_TAG"
 deploy:
   provider: npm
   cleanup: false
-  github_token: $GITHUB_TOKEN
   email: $NPM_EMAIL
   api_token: $NPM_TOKEN
   access: 'public'
