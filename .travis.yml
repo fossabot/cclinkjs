@@ -4,6 +4,8 @@ node_js:
 cache:
   npm: false
 script:
+  - export TRAVIS_TAG=$GIT_TAG
+  - echo "$TRAVIS_TAG"
   - npm install
   - npm run lint
   - npm run test
