@@ -3,7 +3,6 @@
   "version": "1.1.9",
   "description": "cc.163.com Front-End Module cclink.js node",
   "main": "dist/index.js",
-  "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development ts-node-dev src/index.ts --watch src",
     "test": "jest",
