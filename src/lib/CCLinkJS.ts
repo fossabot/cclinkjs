@@ -1,5 +1,15 @@
 import WebSocket from 'websocket'
+import events from 'events'
 import { CCLinkDataProcessing, ICCJsonData, ICCRecvJsonData } from './CCLinkDataProcessing'
+
+interface CCLinkJS extends events.EventEmitter {
+  addListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  on(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  once(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  removeListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  off(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  emit(event: string | symbol, data: ICCRecvJsonData): boolean
+}
 
 interface ICCLinkJSOptions {
   url?: string
@@ -15,24 +25,20 @@ interface ICCLinkJSOptions {
 /**
  * cclink.js 主类
  */
-class CCLinkJS {
-  public WebSocket: {
+class CCLinkJS extends events.EventEmitter {
+  public socket: {
     client: WebSocket.client
     server: WebSocket.server
-    socketConnection: WebSocket.connection | null
+    connection: WebSocket.connection | null
   }
+
   private cfg: {
     url: string
     useWss: boolean
     reconnect: { autoReconnect: boolean; reconnectCount: number; reconnectTimes: number }
     heartbeatInterval: number
   }
-  private _event: {
-    connect?: (connection?: WebSocket.connection) => void
-    error?: (error?: Error) => void
-    close?: (code?: number, desc?: string) => void
-    message?: (data?: WebSocket.IMessage) => void
-  }
+
   private _reconnectCount: number
   private _reconnectInterval: NodeJS.Timeout | null
   private _heartbeatInterval: NodeJS.Timeout | null
@@ -43,6 +49,7 @@ class CCLinkJS {
    * @param options 配置项
    */
   constructor(options?: ICCLinkJSOptions) {
+    super()
     this.cfg = {
       url: options?.url || '//weblink.cc.163.com/',
       useWss: options?.useWss || true,
@@ -54,32 +61,13 @@ class CCLinkJS {
       heartbeatInterval: options?.heartbeatInterval || 30000,
     }
 
-    this.WebSocket = {
+    this.socket = {
       client: new WebSocket.client(),
       server: new WebSocket.server(),
-      socketConnection: null,
+      connection: null,
     }
 
-    this._event = {
-      connect: undefined,
-      error: undefined,
-      close: undefined,
-      message: undefined,
-    }
-
-    this._reconnectCount = 0
-    this._reconnectInterval = null
-    this._heartbeatInterval = null
-
-    this.middleware = []
-  }
-
-  /**
-   * 连接服务器
-   */
-  public connect(): this {
-    this.WebSocket.client.connect((this.cfg.useWss ? 'wss:' : 'ws:') + this.cfg.url)
-    this.WebSocket.client.on('connect', (connection: WebSocket.connection) => {
+    this.socket.client.on('connect', (connection: WebSocket.connection) => {
       this._onConnect(connection)
       connection
         .on('error', (error: Error) => {
@@ -95,34 +83,26 @@ class CCLinkJS {
         })
     })
 
+    this._reconnectCount = 0
+    this._reconnectInterval = null
+    this._heartbeatInterval = null
+
+    this.middleware = []
+  }
+
+  /**
+   * 打开连接
+   */
+  public connect(): this {
+    !this.socket.connection && this.socket.client.connect((this.cfg.useWss ? 'wss:' : 'ws:') + this.cfg.url)
     return this
   }
 
   /**
-   * 设置事件回调
-   *
-   * @param event 事件名称
-   * @param callback 回调方法
+   * 关闭连接
    */
-  public on(event: 'connect', callback?: (connection?: WebSocket.connection) => void): this
-  public on(event: 'error', callback?: (error?: Error) => void): this
-  public on(event: 'close', callback?: (code?: number, desc?: string) => void): this
-  public on(event: 'message', callback?: (data?: WebSocket.IMessage) => void): this
-  public on(event: string, callback?: () => void): this {
-    switch (event) {
-      case 'connect':
-        this._event.connect = callback
-        break
-      case 'error':
-        this._event.error = callback
-        break
-      case 'close':
-        this._event.close = callback
-        break
-      case 'message':
-        this._event.message = callback
-        break
-    }
+  public close(): this {
+    this.socket.connection && this.socket.connection.close()
     return this
   }
 
@@ -131,8 +111,7 @@ class CCLinkJS {
    * @param connection websocket connection
    */
   private _onConnect(connection: WebSocket.connection): void {
-    this.WebSocket.socketConnection = connection
-    this._event.connect && this._event.connect(connection)
+    this.socket.connection = connection
     this._startHeartBeat()
 
     if (this.cfg.reconnect.autoReconnect && this._reconnectInterval) {
@@ -146,7 +125,6 @@ class CCLinkJS {
    * @param error
    */
   private _onError(error: Error): void {
-    this._event.error && this._event.error(error)
     this._stopHeartBeat()
 
     if (this.cfg.reconnect.autoReconnect && !this._reconnectInterval) {
@@ -168,8 +146,7 @@ class CCLinkJS {
    * @param desc 描述
    */
   private _onClose(code: number, desc: string): void {
-    this.WebSocket.socketConnection = null
-    this._event.close && this._event.close(code, desc)
+    this.socket.connection = null
     this._stopHeartBeat()
   }
 
@@ -182,7 +159,7 @@ class CCLinkJS {
       const Uint8ArrayData = new Uint8Array(data.binaryData),
         unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
 
-      this._event.message && this._event.message(data)
+      this.emit(`${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`, unpackData)
 
       const fn = this.compose(this.middleware)
       fn(unpackData)
@@ -198,7 +175,7 @@ class CCLinkJS {
   public send(data: ICCJsonData): this {
     const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
       BufferData: Buffer = Buffer.from(Uint8ArrayData)
-    this.WebSocket.socketConnection && this.WebSocket.socketConnection.sendBytes(BufferData)
+    this.socket.connection && this.socket.connection.sendBytes(BufferData)
 
     return this
   }
