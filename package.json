@@ -9,7 +9,7 @@
     "test": "jest",
     "lint": "eslint --ext .ts src/**",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "tsc": "tsc -p tsconfig.json",
+    "build:tsc": "tsc -p tsconfig.json",
     "build:dev": "cross-env NODE_ENV=development npx rollup -c",
     "build": "cross-env NODE_ENV=production npx rollup -c"
   },
