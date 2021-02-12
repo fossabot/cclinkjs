@@ -7,7 +7,7 @@ script:
   - npm install
   - npm run lint
   - npm run test
-  - npm run tsc
+  - npm run build:tsc
 before_deploy:
   - export TRAVIS_TAG=$GIT_TAG
   - echo "$TRAVIS_TAG"
