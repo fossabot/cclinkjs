@@ -39,6 +39,11 @@ cclinkjs.socket.client.on('connect', (connection) => {
     })
 })
 
+// 也可以使用 cclinkjs.on() 监听 websocket 事件
+cclinkjs.on('connect', (connection) => {
+  console.log('连接成功')
+})
+
 ```
 
 ## 数据发送与接收处理
@@ -46,9 +51,14 @@ cclinkjs.socket.client.on('connect', (connection) => {
 ### 向服务器发送数据
 
 ```javascript
-// 发送 JSON 数据
+// 异步发送 JSON 数据
 // 6144-5：心跳包协议
 cclinkjs.send({ ccsid: 6144, cccid: 5 })
+
+// 同步发送 JSON 数据
+// 可等待服务端响应请求并返回数据
+const recvJsonData = await cclinkjs.sendAsync({ ccsid: 6144, cccid: 5 })
+console.log(recvJsonData) // "{ ccsid: 6144, cccid: 5, reason: 'ok', result: 0 }"
 ```
 
 ### 使用事件处理数据
