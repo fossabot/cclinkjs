@@ -3,11 +3,35 @@ import events from 'events'
 import { CCLinkDataProcessing, ICCJsonData, ICCRecvJsonData } from './CCLinkDataProcessing'
 
 interface CCLinkJS extends events.EventEmitter {
+  addListener(event: 'connect', listener: (connection: WebSocket.connection) => void): this
+  addListener(event: 'error', listener: (error: Error) => void): this
+  addListener(event: 'close', listener: (code: number, desc: string) => void): this
+  addListener(event: 'message', listener: (data: WebSocket.IMessage) => void): this
   addListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  on(event: 'connect', listener: (connection: WebSocket.connection) => void): this
+  on(event: 'error', listener: (error: Error) => void): this
+  on(event: 'close', listener: (code: number, desc: string) => void): this
+  on(event: 'message', listener: (data: WebSocket.IMessage) => void): this
   on(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  once(event: 'connect', listener: (connection: WebSocket.connection) => void): this
+  once(event: 'error', listener: (error: Error) => void): this
+  once(event: 'close', listener: (code: number, desc: string) => void): this
+  once(event: 'message', listener: (data: WebSocket.IMessage) => void): this
   once(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  removeListener(event: 'connect', listener: (connection: WebSocket.connection) => void): this
+  removeListener(event: 'error', listener: (error: Error) => void): this
+  removeListener(event: 'close', listener: (code: number, desc: string) => void): this
+  removeListener(event: 'message', listener: (data: WebSocket.IMessage) => void): this
   removeListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  off(event: 'connect', listener: (connection: WebSocket.connection) => void): this
+  off(event: 'error', listener: (error: Error) => void): this
+  off(event: 'close', listener: (code: number, desc: string) => void): this
+  off(event: 'message', listener: (data: WebSocket.IMessage) => void): this
   off(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  emit(event: 'connect', connection: WebSocket.connection): boolean
+  emit(event: 'error', error: Error): boolean
+  emit(event: 'close', code: number, desc: string): boolean
+  emit(event: 'message', data: WebSocket.IMessage): boolean
   emit(event: string | symbol, data: ICCRecvJsonData): boolean
 }
 
@@ -111,7 +135,9 @@ class CCLinkJS extends events.EventEmitter {
    * @param connection websocket connection
    */
   private _onConnect(connection: WebSocket.connection): void {
+    this.emit('connect', connection)
     this.socket.connection = connection
+
     this._startHeartBeat()
 
     if (this.cfg.reconnect.autoReconnect && this._reconnectInterval) {
@@ -125,6 +151,8 @@ class CCLinkJS extends events.EventEmitter {
    * @param error
    */
   private _onError(error: Error): void {
+    this.emit('error', error)
+
     this._stopHeartBeat()
 
     if (this.cfg.reconnect.autoReconnect && !this._reconnectInterval) {
@@ -146,7 +174,9 @@ class CCLinkJS extends events.EventEmitter {
    * @param desc 描述
    */
   private _onClose(code: number, desc: string): void {
+    this.emit('close', code, desc)
     this.socket.connection = null
+
     this._stopHeartBeat()
   }
 
@@ -184,15 +214,15 @@ class CCLinkJS extends events.EventEmitter {
    * 开始自动发送心跳包
    */
   private _startHeartBeat(): void {
-    this.send({
+    const heartBeat = {
       ccsid: 6144,
       cccid: 5,
-    })
+    }
+
+    this.send(heartBeat)
+
     this._heartbeatInterval = setInterval(() => {
-      this.send({
-        ccsid: 6144,
-        cccid: 5,
-      })
+      this.send(heartBeat)
     }, this.cfg.heartbeatInterval)
   }
 
