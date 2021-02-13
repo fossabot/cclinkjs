@@ -3,36 +3,42 @@ import events from 'events'
 import { CCLinkDataProcessing, ICCJsonData, ICCRecvJsonData } from './CCLinkDataProcessing'
 
 interface CCLinkJS extends events.EventEmitter {
+  // addListener
+  addListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
   addListener(event: 'connect', listener: (connection: WebSocket.connection) => void): this
   addListener(event: 'error', listener: (error: Error) => void): this
   addListener(event: 'close', listener: (code: number, desc: string) => void): this
   addListener(event: 'message', listener: (data: WebSocket.IMessage) => void): this
-  addListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  // on
+  on(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
   on(event: 'connect', listener: (connection: WebSocket.connection) => void): this
   on(event: 'error', listener: (error: Error) => void): this
   on(event: 'close', listener: (code: number, desc: string) => void): this
   on(event: 'message', listener: (data: WebSocket.IMessage) => void): this
-  on(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  // once
+  once(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
   once(event: 'connect', listener: (connection: WebSocket.connection) => void): this
   once(event: 'error', listener: (error: Error) => void): this
   once(event: 'close', listener: (code: number, desc: string) => void): this
   once(event: 'message', listener: (data: WebSocket.IMessage) => void): this
-  once(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  // removeListener
+  removeListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
   removeListener(event: 'connect', listener: (connection: WebSocket.connection) => void): this
   removeListener(event: 'error', listener: (error: Error) => void): this
   removeListener(event: 'close', listener: (code: number, desc: string) => void): this
   removeListener(event: 'message', listener: (data: WebSocket.IMessage) => void): this
-  removeListener(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  // off
+  off(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
   off(event: 'connect', listener: (connection: WebSocket.connection) => void): this
   off(event: 'error', listener: (error: Error) => void): this
   off(event: 'close', listener: (code: number, desc: string) => void): this
   off(event: 'message', listener: (data: WebSocket.IMessage) => void): this
-  off(event: string | symbol, listener: (data: ICCRecvJsonData) => void): this
+  // emit
+  emit(event: string | symbol, data: ICCRecvJsonData): boolean
   emit(event: 'connect', connection: WebSocket.connection): boolean
   emit(event: 'error', error: Error): boolean
   emit(event: 'close', code: number, desc: string): boolean
   emit(event: 'message', data: WebSocket.IMessage): boolean
-  emit(event: string | symbol, data: ICCRecvJsonData): boolean
 }
 
 interface ICCLinkJSOptions {
