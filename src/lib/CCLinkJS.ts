@@ -42,45 +42,107 @@ interface CCLinkJS extends events.EventEmitter {
 }
 
 interface ICCLinkJSOptions {
-  url?: string
-  useWss?: boolean
-  reconnect?: {
-    autoReconnect?: boolean
-    reconnectCount?: number
-    reconnectTimes?: number
+  /**
+   * 服务端 websocket url
+   *
+   * 默认: `//weblink.cc.163.com/`
+   */
+  url: string
+
+  /**
+   * 是否使用 wss 协议连接
+   *
+   * 默认: `false`
+   */
+  useWss: boolean
+
+  /**
+   * 自动重连
+   */
+  reconnect: {
+    /**
+     * 当 connection 发出 error 事件时，则会触发自动重连
+     *
+     * 默认: `true`
+     */
+    autoReconnect: boolean
+
+    /**
+     * 自动重连次数
+     *
+     * 默认: `3`
+     */
+    reconnectCount: number
+
+    /**
+     * 自动重连间隔时间(ms)
+     *
+     * 默认: `5000`
+     */
+    reconnectTimes: number
   }
-  heartbeatInterval?: number
+
+  /**
+   * 自动发送心跳包间隔时间(ms)
+   *
+   * 默认: `30000`
+   */
+  heartbeatInterval: number
 }
 
 /**
  * cclink.js 主类
  */
 class CCLinkJS extends events.EventEmitter {
+  /**
+   * websocket 实例
+   */
   public socket: {
     client: WebSocket.client
     server: WebSocket.server
     connection: WebSocket.connection | null
   }
 
-  private cfg: {
-    url: string
-    useWss: boolean
-    reconnect: { autoReconnect: boolean; reconnectCount: number; reconnectTimes: number }
-    heartbeatInterval: number
-  }
+  /**
+   * CCLinkJS 配置项
+   */
+  private options: ICCLinkJSOptions
 
+  /**
+   * 自动重连次数
+   */
   private _reconnectCount: number
+
+  /**
+   * 自动重连定时器
+   */
   private _reconnectInterval: NodeJS.Timeout | null
+
+  /**
+   * 自动发送心跳包定时器
+   */
   private _heartbeatInterval: NodeJS.Timeout | null
+
+  /**
+   * 中间件数组
+   */
   private middleware: Array<(data: ICCRecvJsonData, next: () => Promise<unknown>) => void>
 
   /**
+   * 用做 sendAsync() 方法的 EventEmitter
+   *
+   * 其内部只有 EventEmitter.once() 监听器
+   */
+  private asyncEventEmitter: events.EventEmitter
+
+  /**
    * 创建一个 cclink.js 对象
-   * @param options 配置项
+   * @param options CCLinkJS 配置项
    */
   constructor(options?: ICCLinkJSOptions) {
     super()
-    this.cfg = {
+
+    this.options = {
       url: options?.url || '//weblink.cc.163.com/',
       useWss: options?.useWss || true,
       reconnect: {
@@ -118,13 +180,15 @@ class CCLinkJS extends events.EventEmitter {
     this._heartbeatInterval = null
 
     this.middleware = []
+
+    this.asyncEventEmitter = new events.EventEmitter()
   }
 
   /**
    * 打开连接
    */
   public connect(): this {
-    !this.socket.connection && this.socket.client.connect((this.cfg.useWss ? 'wss:' : 'ws:') + this.cfg.url)
+    !this.socket.connection && this.socket.client.connect((this.options.useWss ? 'wss:' : 'ws:') + this.options.url)
     return this
   }
 
@@ -144,9 +208,11 @@ class CCLinkJS extends events.EventEmitter {
     this.emit('connect', connection)
     this.socket.connection = connection
 
-    this._startHeartBeat()
+    setTimeout(() => {
+      this._startHeartBeat()
+    }, 1000)
 
-    if (this.cfg.reconnect.autoReconnect && this._reconnectInterval) {
+    if (this.options.reconnect.autoReconnect && this._reconnectInterval) {
       this._reconnectCount = 0
       clearInterval(this._reconnectInterval)
     }
@@ -161,16 +227,16 @@ class CCLinkJS extends events.EventEmitter {
 
     this._stopHeartBeat()
 
-    if (this.cfg.reconnect.autoReconnect && !this._reconnectInterval) {
+    if (this.options.reconnect.autoReconnect && !this._reconnectInterval) {
       this._reconnectInterval = setInterval(() => {
-        if (this._reconnectCount < this.cfg.reconnect.reconnectCount) {
+        if (this._reconnectCount < this.options.reconnect.reconnectCount) {
           this.connect()
           this._reconnectCount++
         } else {
           this._reconnectCount = 0
           this._reconnectInterval && clearInterval(this._reconnectInterval)
         }
-      }, this.cfg.reconnect.reconnectTimes)
+      }, this.options.reconnect.reconnectTimes)
     }
   }
 
@@ -192,28 +258,67 @@ class CCLinkJS extends events.EventEmitter {
    */
   private _onMessage(data: WebSocket.IMessage): void {
     if (data.binaryData?.byteLength) {
-      const Uint8ArrayData = new Uint8Array(data.binaryData),
-        unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
-
-      this.emit(`${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`, unpackData)
+      const Uint8ArrayData = new Uint8Array(data.binaryData)
+      const unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
 
       const fn = this.compose(this.middleware)
       fn(unpackData)
+
+      const eventName = `${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`
+
+      this.emit(eventName, unpackData)
+      this.asyncEventEmitter.emit(eventName, unpackData)
     }
   }
 
   /**
    * 向服务端发送 JSON 数据，该方法会自动编码需要发送至服务端的 JSON 数据。
    *
-   * @param data JSON 数据
-   *     其中必须包含 `ccsid` 和 `cccid` 两个属性，这两个属性指定了该数据属于服务端的哪个接口。
+   * @param data JSON 数据，其中必须包含 `ccsid` 和 `cccid` 两个属性，这两个属性指定了该数据属于服务端的哪个接口。
    */
   public send(data: ICCJsonData): this {
+    if (!data.ccsid || !data.ccsid) throw new ReferenceError('ccsid/cccid is not defined')
+
     const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
       BufferData: Buffer = Buffer.from(Uint8ArrayData)
     this.socket.connection && this.socket.connection.sendBytes(BufferData)
 
     return this
+  }
+
+  /**
+   * 向服务端发送 JSON 数据，该方法会自动编码需要发送至服务端的 JSON 数据。
+   *
+   * 与 `send()` 不同，该方法为同步版，在发送时会等待服务端响应本次请求，否则判定为发送超时。
+   *
+   * @param data JSON 数据，其中必须包含 `ccsid` 和 `cccid` 两个属性，这两个属性指定了该数据属于服务端的哪个接口。
+   * @param timeout 超时阈值(ms)，超过此阈值未返回数据，则判定为请求超时。(默认: 5000)
+   */
+  public sendAsync(data: ICCJsonData, timeout?: number): Promise<ICCRecvJsonData> {
+    if (!data.ccsid || !data.ccsid) throw new ReferenceError('ccsid/cccid is not defined')
+
+    const id = {
+      ccsid: data.ccsid,
+      cccid: data.cccid,
+    }
+
+    const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
+      BufferData: Buffer = Buffer.from(Uint8ArrayData)
+    this.socket.connection && this.socket.connection.sendBytes(BufferData)
+
+    return new Promise((resolve, reject) => {
+      const eventName = `${id.ccsid.toString()}-${id.cccid.toString()}`
+      const listener = (recvJsonData: ICCRecvJsonData) => {
+        resolve(recvJsonData)
+      }
+
+      setTimeout(() => {
+        this.asyncEventEmitter.off(eventName, listener)
+        reject('timeout')
+      }, timeout || 5000)
+
+      this.asyncEventEmitter.once(eventName, listener)
+    })
   }
 
   /**
@@ -226,10 +331,13 @@ class CCLinkJS extends events.EventEmitter {
     }
 
     this.send(heartBeat)
-
     this._heartbeatInterval = setInterval(() => {
-      this.send(heartBeat)
-    }, this.cfg.heartbeatInterval)
+      // 这里有个坑爹的作用域问题，所以暂时写成对象字面量
+      this.send({
+        ccsid: 6144,
+        cccid: 5,
+      })
+    }, this.options.heartbeatInterval)
   }
 
   /**
