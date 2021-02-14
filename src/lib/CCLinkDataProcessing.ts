@@ -18,7 +18,7 @@ interface ICCRecvJsonData extends ICCJsonData {
   readonly result?: number
   readonly _cid?: number
   readonly _sid?: number
-  [propName: string]: unknown
+  readonly [propName: string]: unknown
 }
 
 /**
@@ -66,15 +66,14 @@ class CCLinkDataProcessing {
       cccid: this.cccid,
     }
 
-    if (type === 'json') {
-      return Object.assign({}, _temp, this.msgWithOutSidCid)
+    switch (type) {
+      case 'json':
+        return Object.assign({}, _temp, this.msgWithOutSidCid)
+      case 'string':
+        return JSON.stringify(this)
+      default:
+        return JSON.stringify(this)
     }
-
-    if (type === 'string') {
-      return JSON.stringify(this)
-    }
-
-    return this
   }
 
   /**
@@ -85,9 +84,9 @@ class CCLinkDataProcessing {
    * @returns Uint8Array Data
    */
   public dumps(): Uint8Array {
-    const msgpackEncodeUint8Array = encode(this.msgWithOutSidCid),
-      dumpsUint8Array = new Uint8Array(8 + msgpackEncodeUint8Array.byteLength),
-      dumpsDataView = new DataView(dumpsUint8Array.buffer)
+    const msgpackEncodeUint8Array = encode(this.msgWithOutSidCid)
+    const dumpsUint8Array = new Uint8Array(8 + msgpackEncodeUint8Array.byteLength)
+    const dumpsDataView = new DataView(dumpsUint8Array.buffer)
 
     dumpsDataView.setUint16(0, this.ccsid, true)
     dumpsDataView.setUint16(2, this.cccid, true)
@@ -108,21 +107,21 @@ class CCLinkDataProcessing {
    * @returns CCLinkDataProcessing
    */
   public static unpack(Uint8ArrayData: Uint8Array): CCLinkDataProcessing {
-    const n: DataView = new DataView(Uint8ArrayData.buffer),
-      ccsid = n.getUint16(0, true),
-      cccid = n.getUint16(2, true)
+    const n = new DataView(Uint8ArrayData.buffer)
+    const ccsid = n.getUint16(0, true)
+    const cccid = n.getUint16(2, true)
 
-    let o = new Uint8Array()
+    let o = new Uint8Array(Uint8ArrayData.buffer, 8)
 
     if (n.getUint32(4, true)) {
-      const s = n.getUint32(8, true),
-        u = new Uint8Array(Uint8ArrayData.buffer, 12)
-      u.byteLength === s && (o = pako.inflate(u))
-    } else {
-      o = new Uint8Array(Uint8ArrayData.buffer, 8)
+      const s = n.getUint32(8, true)
+      const u = new Uint8Array(Uint8ArrayData.buffer, 12)
+      if (u.byteLength === s) {
+        o = pako.inflate(u)
+      }
     }
 
-    const f = <ICCRecvJsonData>decode(Buffer.from(o))
+    const recvJsonData = <ICCRecvJsonData>decode(Buffer.from(o))
 
     return new CCLinkDataProcessing(
       Object.assign(
@@ -131,7 +130,7 @@ class CCLinkDataProcessing {
           ccsid,
           cccid,
         },
-        this.replaceLinkBreak(f)
+        this.replaceLinkBreak(recvJsonData)
       )
     )
   }
