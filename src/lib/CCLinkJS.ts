@@ -259,15 +259,21 @@ class CCLinkJS extends events.EventEmitter {
   private _onMessage(data: WebSocket.IMessage): void {
     if (data.binaryData?.byteLength) {
       const Uint8ArrayData = new Uint8Array(data.binaryData)
-      const unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
 
-      const fn = this.compose(this.middleware)
-      fn(unpackData)
+      try {
+        const unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
 
-      const eventName = `${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`
+        const fn = this.compose(this.middleware)
+        fn(unpackData)
 
-      this.emit(eventName, unpackData)
-      this.asyncEventEmitter.emit(eventName, unpackData)
+        const eventName = `${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`
+
+        this.emit(eventName, unpackData)
+        this.asyncEventEmitter.emit(eventName, unpackData)
+      } catch (error) {
+        console.error(error)
+        return
+      }
     }
   }
 
@@ -279,8 +285,9 @@ class CCLinkJS extends events.EventEmitter {
   public send(data: ICCJsonData): this {
     if (!data.ccsid || !data.ccsid) throw new ReferenceError('ccsid/cccid is not defined')
 
-    const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
-      BufferData: Buffer = Buffer.from(Uint8ArrayData)
+    const Uint8ArrayData = new CCLinkDataProcessing(data).dumps()
+    const BufferData = Buffer.from(Uint8ArrayData)
+
     this.socket.connection && this.socket.connection.sendBytes(BufferData)
 
     return this
@@ -302,8 +309,9 @@ class CCLinkJS extends events.EventEmitter {
       cccid: data.cccid,
     }
 
-    const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps(),
-      BufferData: Buffer = Buffer.from(Uint8ArrayData)
+    const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps()
+    const BufferData: Buffer = Buffer.from(Uint8ArrayData)
+    
     this.socket.connection && this.socket.connection.sendBytes(BufferData)
 
     return new Promise((resolve, reject) => {
