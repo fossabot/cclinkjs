@@ -1,5 +1,4 @@
 module.exports = {
-  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2018,
     sourceType: 'module',
@@ -12,17 +11,18 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
-  plugins: ['@typescript-eslint'],
   extends: ['eslint:recommended'],
   overrides: [
     {
       files: ['*.ts', '*.tsx'],
+      parser: '@typescript-eslint/parser',
+      plugins: ['@typescript-eslint'],
       extends: ['plugin:@typescript-eslint/recommended'],
     },
   ],
   rules: {
-    'no-unused-vars': 0,
-    'require-atomic-updates': 0,
-    'no-async-promise-executor': 0,
+    'no-unused-vars': 'warn',
+    'require-atomic-updates': 'off',
+    'no-async-promise-executor': 'off',
   },
 }
