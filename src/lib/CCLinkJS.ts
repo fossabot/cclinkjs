@@ -259,21 +259,15 @@ class CCLinkJS extends events.EventEmitter {
   private _onMessage(data: WebSocket.IMessage): void {
     if (data.binaryData?.byteLength) {
       const Uint8ArrayData = new Uint8Array(data.binaryData)
+      const unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
 
-      try {
-        const unpackData = CCLinkDataProcessing.unpack(Uint8ArrayData).format('json')
+      const fn = this.compose(this.middleware)
+      fn(unpackData)
 
-        const fn = this.compose(this.middleware)
-        fn(unpackData)
+      const eventName = `${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`
 
-        const eventName = `${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`
-
-        this.emit(eventName, unpackData)
-        this.asyncEventEmitter.emit(eventName, unpackData)
-      } catch (error) {
-        console.error(error)
-        return
-      }
+      this.emit(eventName, unpackData)
+      this.asyncEventEmitter.emit(eventName, unpackData)
     }
   }
 
@@ -302,30 +296,27 @@ class CCLinkJS extends events.EventEmitter {
    * @param timeout 超时阈值(ms)，超过此阈值未返回数据，则判定为请求超时。(默认: 5000)
    */
   public sendAsync(data: ICCJsonData, timeout?: number): Promise<ICCRecvJsonData> {
-    if (!data.ccsid || !data.ccsid) throw new ReferenceError('ccsid/cccid is not defined')
-
     const id = {
       ccsid: data.ccsid,
       cccid: data.cccid,
     }
 
-    const Uint8ArrayData: Uint8Array = new CCLinkDataProcessing(data).dumps()
-    const BufferData: Buffer = Buffer.from(Uint8ArrayData)
-    
-    this.socket.connection && this.socket.connection.sendBytes(BufferData)
+    this.send(data)
 
     return new Promise((resolve, reject) => {
       const eventName = `${id.ccsid.toString()}-${id.cccid.toString()}`
-      const listener = (recvJsonData: ICCRecvJsonData) => {
+      const eventListener = (recvJsonData: ICCRecvJsonData) => {
         resolve(recvJsonData)
       }
 
-      setTimeout(() => {
-        this.asyncEventEmitter.off(eventName, listener)
-        reject('timeout')
-      }, timeout || 5000)
+      const defaultTimeout = 5000
 
-      this.asyncEventEmitter.once(eventName, listener)
+      setTimeout(() => {
+        this.asyncEventEmitter.off(eventName, eventListener)
+        reject(new Error(`${eventName} send timeout.`))
+      }, timeout || defaultTimeout)
+
+      this.asyncEventEmitter.once(eventName, eventListener)
     })
   }
 
@@ -377,7 +368,7 @@ class CCLinkJS extends events.EventEmitter {
       if (typeof fn !== 'function') throw new TypeError('Middleware must be composed of functions!')
     }
 
-    return function (data: ICCRecvJsonData, next?: () => Promise<unknown>) {
+    return function (data: ICCRecvJsonData, next?: () => Promise<unknown>): Promise<unknown> {
       let index = -1
       return dispatch(0)
       function dispatch(i: number): Promise<unknown> {
