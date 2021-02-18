@@ -57,7 +57,7 @@ cclinkjs.send({ ccsid: 6144, cccid: 5 })
 
 // 同步发送 JSON 数据
 // 可等待服务端响应请求并返回数据
-const recvJsonData = await cclinkjs.sendAsync({ ccsid: 6144, cccid: 5 })
+const recvJsonData = await cclinkjs.sendSync({ ccsid: 6144, cccid: 5 })
 console.log(recvJsonData) // "{ ccsid: 6144, cccid: 5, reason: 'ok', result: 0 }"
 ```
 

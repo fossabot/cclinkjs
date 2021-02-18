@@ -295,7 +295,7 @@ class CCLinkJS extends events.EventEmitter {
    * @param data JSON 数据，其中必须包含 `ccsid` 和 `cccid` 两个属性，这两个属性指定了该数据属于服务端的哪个接口。
    * @param timeout 超时阈值(ms)，超过此阈值未返回数据，则判定为请求超时。(默认: 5000)
    */
-  public sendAsync(data: ICCJsonData, timeout?: number): Promise<ICCRecvJsonData> {
+  public sendSync(data: ICCJsonData, timeout?: number): Promise<ICCRecvJsonData> {
     const id = {
       ccsid: data.ccsid,
       cccid: data.cccid,
