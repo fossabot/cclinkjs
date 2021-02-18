@@ -129,11 +129,11 @@ class CCLinkJS extends events.EventEmitter {
   private middleware: Array<(data: ICCRecvJsonData, next: () => Promise<unknown>) => void>
 
   /**
-   * 用做 sendAsync() 方法的 EventEmitter
+   * 用做 sendSync() 方法的 EventEmitter
    *
    * 其内部只有 EventEmitter.once() 监听器
    */
-  private asyncEventEmitter: events.EventEmitter
+  private sendSyncEventEmitter: events.EventEmitter
 
   /**
    * 创建一个 cclink.js 对象
@@ -181,7 +181,7 @@ class CCLinkJS extends events.EventEmitter {
 
     this.middleware = []
 
-    this.asyncEventEmitter = new events.EventEmitter()
+    this.sendSyncEventEmitter = new events.EventEmitter()
   }
 
   /**
@@ -267,7 +267,7 @@ class CCLinkJS extends events.EventEmitter {
       const eventName = `${unpackData.ccsid.toString()}-${unpackData.cccid.toString()}`
 
       this.emit(eventName, unpackData)
-      this.asyncEventEmitter.emit(eventName, unpackData)
+      this.sendSyncEventEmitter.emit(eventName, unpackData)
     }
   }
 
@@ -282,7 +282,13 @@ class CCLinkJS extends events.EventEmitter {
     const Uint8ArrayData = new CCLinkDataProcessing(data).dumps()
     const BufferData = Buffer.from(Uint8ArrayData)
 
-    this.socket.connection && this.socket.connection.sendBytes(BufferData)
+    if (this.socket.connection && this.socket.connection.connected) {
+      this.socket.connection.sendBytes(BufferData)
+    } else {
+      // TODO: 把连接未就绪时就发送的请求缓存下来，待连接就绪时依次发送出去
+      // 而不应该是抛出一个异常 (其实也是为了跟 cclink.js 的行为保持一致)
+      throw new Error('this connection has been closed or not yet connected.')
+    }
 
     return this
   }
@@ -312,11 +318,11 @@ class CCLinkJS extends events.EventEmitter {
       const defaultTimeout = 5000
 
       setTimeout(() => {
-        this.asyncEventEmitter.off(eventName, eventListener)
+        this.sendSyncEventEmitter.off(eventName, eventListener)
         reject(new Error(`${eventName} send timeout.`))
       }, timeout || defaultTimeout)
 
-      this.asyncEventEmitter.once(eventName, eventListener)
+      this.sendSyncEventEmitter.once(eventName, eventListener)
     })
   }
 
