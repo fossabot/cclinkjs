@@ -279,11 +279,11 @@ class CCLinkJS extends events.EventEmitter {
   public send(data: ICCJsonData): this {
     if (!data.ccsid || !data.ccsid) throw new ReferenceError('ccsid/cccid is not defined')
 
-    const Uint8ArrayData = new CCLinkDataProcessing(data).dumps()
-    const BufferData = Buffer.from(Uint8ArrayData)
+    const uint8ArrayData = new CCLinkDataProcessing(data).dumps()
+    const bufferData = Buffer.from(uint8ArrayData)
 
     if (this.socket.connection && this.socket.connection.connected) {
-      this.socket.connection.sendBytes(BufferData)
+      this.socket.connection.sendBytes(bufferData)
     } else {
       // TODO: 把连接未就绪时就发送的请求缓存下来，待连接就绪时依次发送出去
       // 而不应该是抛出一个异常 (其实也是为了跟 cclink.js 的行为保持一致)
