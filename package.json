@@ -1,6 +1,6 @@
 {
   "name": "@hhui64/cclinkjs",
-  "version": "3.1.1",
+  "version": "4.0.0",
   "description": "cc.163.com Front-End Module cclink.js node",
   "main": "dist/index.js",
   "scripts": {
