@@ -1,4 +1,5 @@
 # CCLinkJS Node [![Build Status](https://img.shields.io/travis/com/hhui64/cclinkjs/master?style=flat-square)](https://www.travis-ci.com/hhui64/cclinkjs) ![GitHub](https://img.shields.io/github/license/hhui64/cclinkjs?style=flat-square) ![GitHub](https://img.shields.io/github/languages/top/hhui64/cclinkjs?style=flat-square) ![Release](https://img.shields.io/github/v/release/hhui64/cclinkjs?style=flat-square)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhhui64%2Fcclinkjs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhhui64%2Fcclinkjs?ref=badge_shield)
 
 网易CC直播前端通讯模块 Node.js 包，使用 TypeScript 编写并实现了与网易CC直播服务端的通信协议
 
@@ -104,3 +105,6 @@ cclinkjs
 ## License
 
 [MIT licensed](LICENSE)
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhhui64%2Fcclinkjs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhhui64%2Fcclinkjs?ref=badge_large)
